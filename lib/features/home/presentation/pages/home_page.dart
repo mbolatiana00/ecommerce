@@ -151,8 +151,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   child: TextField(
                     controller: _searchCtrl,
                     textInputAction: TextInputAction.search,
-                    onSubmitted: (q) =>
-                        ref.read(searchQueryProvider.notifier).set(q),
+                    onSubmitted: (q) {
+                      ref
+                          .read(selectedCategoryProvider.notifier)
+                          .select(allCategories);
+                      ref.read(searchQueryProvider.notifier).set(q);
+                    },
                     decoration: InputDecoration(
                       hintText: 'Rechercher un produit',
                       hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
