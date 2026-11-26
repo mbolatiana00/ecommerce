@@ -44,7 +44,7 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   if (kDebugMode) {
-    dio.interceptors.add(LogInterceptor(
+    dio.interceptors.add(_NoAuthLogInterceptor(
       requestBody: true,
       responseBody: true,
       requestHeader: false,
@@ -53,3 +53,33 @@ final dioProvider = Provider<Dio>((ref) {
   }
   return dio;
 });
+
+/// Ne journalise pas les appels /auth (mots de passe et tokens).
+class _NoAuthLogInterceptor extends LogInterceptor {
+  _NoAuthLogInterceptor({
+    super.requestBody,
+    super.responseBody,
+    super.requestHeader,
+    super.logPrint,
+  });
+
+  static bool _isAuth(RequestOptions o) => o.path.startsWith('/auth');
+
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) =>
+      _isAuth(options)
+          ? handler.next(options)
+          : super.onRequest(options, handler);
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) =>
+      _isAuth(response.requestOptions)
+          ? handler.next(response)
+          : super.onResponse(response, handler);
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) =>
+      _isAuth(err.requestOptions)
+          ? handler.next(err)
+          : super.onError(err, handler);
+}

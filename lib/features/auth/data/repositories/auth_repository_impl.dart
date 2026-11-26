@@ -1,8 +1,10 @@
+import 'package:ecommerce/core/error/failure.dart';
 import 'package:ecommerce/core/error/result.dart';
 import 'package:ecommerce/core/storage/token_storage.dart';
 import 'package:ecommerce/features/auth/data/datasource/auth_remote_datasource.dart';
 import 'package:ecommerce/features/auth/domain/entities/user.dart';
 import 'package:ecommerce/features/auth/domain/repositories/auth_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
@@ -20,7 +22,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) => guard(() async {
     final r = await _remote.login(email, password);
-    await _storage.save(access: r.accessToken, refresh: r.refreshToken);
+    final token = r.accessToken;
+    if (token == null) {
+      throw const ServerFailure('Réponse de connexion invalide : token manquant');
+    }
+    await _storage.save(access: token, refresh: r.refreshToken);
     return r.user;
   });
 
@@ -45,7 +51,17 @@ class AuthRepositoryImpl implements AuthRepository {
       password: password,
       phone: phone,
     );
-    await _storage.save(access: r.accessToken, refresh: r.refreshToken);
+    final token = r.accessToken;
+    if (token != null) {
+      await _storage.save(access: token, refresh: r.refreshToken);
+    }
     return r.user;
   });
 }
+
+final authRepositoryProvider = Provider<AuthRepository>(
+  (ref) => AuthRepositoryImpl(
+    ref.watch(authRemoteDataSourceProvider),
+    ref.watch(tokenStorageProvider),
+  ),
+);

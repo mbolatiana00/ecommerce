@@ -1,9 +1,11 @@
 import 'package:ecommerce/core/network/formatter_ariary.dart';
 import 'package:ecommerce/core/theme/ecommerce_theme.dart';
-import 'package:ecommerce/features/home/domain/product.dart';
+import 'package:ecommerce/core/route/route_name.dart';
+import 'package:ecommerce/features/product/domain/entites/product.dart';
 import 'package:ecommerce/features/home/presentation/providers/home_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 
 class ProductCard extends ConsumerWidget {
@@ -16,8 +18,7 @@ class ProductCard extends ConsumerWidget {
     final discount = product.discountPercent;
 
     return GestureDetector(
-      onTap: () =>
-          Navigator.pushNamed(context, '/product', arguments: product),
+      onTap: () => context.push(ProductRoute, extra: product),
       child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -42,9 +43,16 @@ class ProductCard extends ConsumerWidget {
                     color: product.color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Center(
-                    // TODO : remplace par CachedNetworkImage(imageUrl: ...)
-                    child: Icon(product.icon, size: 56, color: product.color),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox.expand(
+                    child: product.hasImage
+                        ? Image.network(
+                            product.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(product.icon,
+                                size: 56, color: product.color),
+                          )
+                        : Icon(product.icon, size: 56, color: product.color),
                   ),
                 ),
                 if (discount != null)

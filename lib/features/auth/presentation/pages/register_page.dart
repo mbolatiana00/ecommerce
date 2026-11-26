@@ -72,13 +72,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         );
       }
       if (next.status == AuthStatus.success) {
-        // TODO : Navigator.pushReplacementNamed(context, '/home');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Compte créé avec succès'),
+          SnackBar(
+            content: Text(next.isAuthenticated
+                ? 'Compte créé avec succès'
+                : 'Compte créé, connecte-toi pour continuer'),
             behavior: SnackBarBehavior.floating,
           ),
         );
+        context.go(next.isAuthenticated ? HomeRoute : LoginRoute);
       }
     });
 

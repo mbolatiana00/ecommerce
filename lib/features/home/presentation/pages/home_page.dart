@@ -1,3 +1,4 @@
+import 'package:ecommerce/core/error/failure.dart';
 import 'package:ecommerce/core/theme/ecommerce_theme.dart';
 import 'package:ecommerce/features/home/presentation/providers/home_provider.dart';
 import 'package:ecommerce/features/product/presentation/pages/product_card.dart';
@@ -57,24 +58,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 }
 
-class _BannerData {
-  final String tag;
-  final String title;
-  final String subtitle;
-  final List<Color> colors;
-  final IconData icon;
-  const _BannerData(this.tag, this.title, this.subtitle, this.colors, this.icon);
-}
-
-const _banners = [
-  _BannerData('Soldes', "Jusqu'à -30% sur la mode", 'Offre limitée cette semaine',
-      [Color(0xFF5B3BE0), Color(0xFF8E6BFF)], Icons.local_offer_rounded),
-  _BannerData('Nouveau', 'Collection Tech', 'Casques, montres et plus',
-      [Color(0xFF0F766E), Color(0xFF2DD4BF)], Icons.headphones_rounded),
-  _BannerData('Livraison', 'Offerte dès 100 000 Ar', 'Partout à Madagascar',
-      [Color(0xFFC2410C), Color(0xFFFB923C)], Icons.local_shipping_rounded),
-];
-
 class _HomeTab extends ConsumerStatefulWidget {
   const _HomeTab();
 
@@ -83,12 +66,11 @@ class _HomeTab extends ConsumerStatefulWidget {
 }
 
 class _HomeTabState extends ConsumerState<_HomeTab> {
-  final _pageCtrl = PageController(viewportFraction: 0.92);
-  int _page = 0;
+  final _searchCtrl = TextEditingController();
 
   @override
   void dispose() {
-    _pageCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -96,6 +78,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
   Widget build(BuildContext context) {
     final cartCount = ref.watch(cartCountProvider);
     final selected = ref.watch(selectedCategoryProvider);
+    final categories = ref.watch(categoriesProvider);
     final products = ref.watch(filteredProductsProvider);
 
     return CustomScrollView(
@@ -166,6 +149,14 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
               children: [
                 Expanded(
                   child: TextField(
+                    controller: _searchCtrl,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (q) {
+                      ref
+                          .read(selectedCategoryProvider.notifier)
+                          .select(allCategories);
+                      ref.read(searchQueryProvider.notifier).set(q);
+                    },
                     decoration: InputDecoration(
                       hintText: 'Rechercher un produit',
                       hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
@@ -189,94 +180,6 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(Icons.tune_rounded, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Bannières
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 22),
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 160,
-                  child: PageView.builder(
-                    controller: _pageCtrl,
-                    itemCount: _banners.length,
-                    onPageChanged: (i) => setState(() => _page = i),
-                    itemBuilder: (_, i) {
-                      final b = _banners[i];
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 6),
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: b.colors,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.22),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(b.tag,
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700)),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(b.title,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 19,
-                                          fontWeight: FontWeight.w800,
-                                          height: 1.2)),
-                                  const SizedBox(height: 6),
-                                  Text(b.subtitle,
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                            Icon(b.icon,
-                                size: 80, color: Colors.white.withValues(alpha: 0.35)),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_banners.length, (i) {
-                    final active = i == _page;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: active ? 22 : 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: active ? AppTheme.primary : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    );
-                  }),
                 ),
               ],
             ),
@@ -341,20 +244,44 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           ),
         ),
         // Grille de produits
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 0.66,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (_, i) => ProductCard(product: products[i]),
-              childCount: products.length,
+        products.when(
+          loading: () => const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => SliverFillRemaining(
+            hasScrollBody: false,
+            child: _ProductsMessage(
+              icon: Icons.cloud_off_rounded,
+              message: e is Failure ? e.message : 'Impossible de charger les produits',
+              onRetry: () => ref.invalidate(productsProvider),
             ),
           ),
+          data: (items) => items.isEmpty
+              ? SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _ProductsMessage(
+                    icon: Icons.inventory_2_outlined,
+                    message: 'Aucun produit trouvé',
+                    onRetry: () => ref.invalidate(productsProvider),
+                  ),
+                )
+              : SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.66,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => ProductCard(product: items[i]),
+                      childCount: items.length,
+                    ),
+                  ),
+                ),
         ),
       ],
     );
@@ -362,3 +289,35 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
 }
 
 
+
+class _ProductsMessage extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final VoidCallback onRetry;
+  const _ProductsMessage({
+    required this.icon,
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 56, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 12),
+          TextButton(onPressed: onRetry, child: const Text('Réessayer')),
+        ],
+      ),
+    );
+  }
+}
