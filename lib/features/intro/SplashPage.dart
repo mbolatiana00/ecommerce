@@ -68,7 +68,10 @@ class _SplashPageState extends ConsumerState<SplashPage>
 
   Future<bool> _hasSession() async {
     try {
-      final token = await ref.read(tokenStorageProvider).readAccess();
+      final token = await ref
+          .read(tokenStorageProvider)
+          .readAccess()
+          .timeout(_splashDuration, onTimeout: () => null);
       return token != null && token.isNotEmpty;
     } catch (_) {
       return false;
