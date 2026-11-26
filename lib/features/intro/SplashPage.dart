@@ -1,19 +1,23 @@
-import 'dart:async';
+import 'package:ecommerce/core/route/route_name.dart';
+import 'package:ecommerce/core/storage/token_storage.dart';
 import 'package:ecommerce/core/theme/ecommerce_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 
-class SplashPage extends StatefulWidget {
+class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
 
   @override
-  State<SplashPage> createState() => _SplashPageState();
+  ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage>
+class _SplashPageState extends ConsumerState<SplashPage>
     with SingleTickerProviderStateMixin {
   static const String _appName = 'Shop';
   static const String _tagline = 'Tout ce que tu aimes, livré chez toi';
+  static const Duration _splashDuration = Duration(seconds: 2);
 
   late final AnimationController _ctrl;
   late final Animation<double> _logoScale;
@@ -21,7 +25,6 @@ class _SplashPageState extends State<SplashPage>
   late final Animation<double> _textFade;
   late final Animation<Offset> _textSlide;
   late final Animation<double> _loaderFade;
-  Timer? _timer;
 
   @override
   void initState() {
@@ -29,7 +32,7 @@ class _SplashPageState extends State<SplashPage>
 
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: _splashDuration,
     )..forward();
 
     _logoScale = Tween<double>(begin: 0.5, end: 1).animate(
@@ -60,18 +63,33 @@ class _SplashPageState extends State<SplashPage>
       curve: const Interval(0.7, 1.0, curve: Curves.easeIn),
     );
 
-    _timer = Timer(const Duration(milliseconds: 2800), _goNext);
+    _goNext();
   }
 
-  void _goNext() {
+  Future<bool> _hasSession() async {
+    try {
+      final token = await ref
+          .read(tokenStorageProvider)
+          .readAccess()
+          .timeout(_splashDuration, onTimeout: () => null);
+      return token != null && token.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _goNext() async {
+    final results = await Future.wait<Object?>([
+      _hasSession(),
+      Future<void>.delayed(_splashDuration),
+    ]);
     if (!mounted) return;
-    // TODO : si un token est stocké, aller vers '/home' au lieu de '/login'.
-    Navigator.pushReplacementNamed(context, '/login');
+    final isAuthenticated = results.first as bool;
+    context.go(isAuthenticated ? HomeRoute : LoginRoute);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _ctrl.dispose();
     super.dispose();
   }

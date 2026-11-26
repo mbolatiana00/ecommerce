@@ -1,9 +1,11 @@
+import 'package:ecommerce/core/route/route_name.dart';
 import 'package:ecommerce/core/theme/ecommerce_theme.dart';
 import 'package:ecommerce/features/auth/presentation/widgets/password_stengh_bar.dart';
 import 'package:ecommerce/features/auth/presentation/widgets/validators.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ecommerce/features/auth/presentation/providers/auth_provider.dart';
 import 'package:ecommerce/features/auth/presentation/widgets/auth_button.dart';
 import 'package:ecommerce/features/auth/presentation/widgets/auth_scaffold.dart';
@@ -218,7 +220,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                     GestureDetector(
                       onTap: () =>
-                          Navigator.pushReplacementNamed(context, '/login'),
+                          context.go(LoginRoute),
                       child: const Text(
                         'Se connecter',
                         style: TextStyle(
