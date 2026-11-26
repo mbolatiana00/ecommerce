@@ -1,7 +1,9 @@
+import 'package:ecommerce/core/route/route_name.dart';
 import 'package:ecommerce/core/theme/ecommerce_theme.dart';
 import 'package:ecommerce/features/auth/presentation/widgets/validators.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_scaffold.dart';
@@ -56,7 +58,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
       }
       if (next.status == AuthStatus.success) {
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go(HomeRoute);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Connexion réussie'),
@@ -151,7 +153,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     GestureDetector(
                       onTap: () =>
-                          Navigator.pushReplacementNamed(context, '/register'),
+                          context.go(RegisterRoute),
                       child: const Text(
                         "S'inscrire",
                         style: TextStyle(
