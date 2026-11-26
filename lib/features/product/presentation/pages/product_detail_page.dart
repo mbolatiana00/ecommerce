@@ -67,10 +67,15 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
             height: 340,
             child: Container(
               color: AppTheme.primary.withValues(alpha: 0.12),
-              // TODO : remplace par une galerie CachedNetworkImage
-                child: Center(
-                  child: Icon(Icons.shopping_bag_rounded,
-                      size: 150, color: AppTheme.primary)),
+              alignment: Alignment.center,
+              child: p.hasImage
+                  ? Image.network(
+                      p.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          Icon(p.icon, size: 150, color: AppTheme.primary),
+                    )
+                  : Icon(p.icon, size: 150, color: AppTheme.primary),
             ),
           ),
           Positioned.fill(
@@ -94,7 +99,10 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                         const Icon(Icons.star_rounded,
                             size: 20, color: Color(0xFFF59E0B)),
                         const SizedBox(width: 4),
-                        Text('${p.rating}  ·  128 avis',
+                        Text(
+                            p.reviewsCount > 0
+                                ? '${p.rating}  ·  ${p.reviewsCount} avis'
+                                : '${p.rating}',
                             style: TextStyle(
                                 fontSize: 13, color: Colors.grey.shade700)),
                       ],
@@ -132,47 +140,20 @@ class _ProductDetailPageState extends ConsumerState<ProductDetailPage> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Description',
+                    if (p.description.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      const Text('Description',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      Text(
+                        p.description,
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 8),
-                    // TODO : description réelle venant de l'API
-                    Text(
-                      'Produit de qualité sélectionné pour toi. Livraison rapide '
-                      'partout à Madagascar, retour possible sous 7 jours si '
-                      "l'article ne te convient pas.",
-                      style: TextStyle(
-                          fontSize: 14, height: 1.5, color: Colors.grey.shade700),
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final t in ['Livraison 48 h', 'Garantie 1 an', 'Retour 7 jours'])
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.fieldFill,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.check_circle_rounded,
-                                    size: 16, color: Color(0xFF15803D)),
-                                const SizedBox(width: 6),
-                                Text(t,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
+                            fontSize: 14,
+                            height: 1.5,
+                            color: Colors.grey.shade700),
+                      ),
+                    ],
                     const SizedBox(height: 22),
                     Row(
                       children: [
